@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "505075663814",
+    "project_id": "masuk-f7182",
+    "storage_bucket": "masuk-f7182.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:505075663814:android:30f134e021fd6105dae8c7",
+        "android_client_info": {
+          "package_name": "com.totaeba.masukgoogle"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "505075663814-02anpvj1f5soj4nqa4rir5dfj8q9eotl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.totaeba.masukgoogle",
+            "certificate_hash": "070ec70ebb1edc1bc3f13c6cc0cffcb2e852c8ef"
+          }
+        },
+        {
+          "client_id": "505075663814-4ndshhkb6ggnrs59715ukmblvu5t7jbn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.totaeba.masukgoogle",
+            "certificate_hash": "8f6ca64457c78f8d8c8b31f087424d2c8e267f68"
+          }
+        },
+        {
+          "client_id": "505075663814-muqqualbv16bvald8mrl8aa7a8dmsr9l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDoSMS5OZVWGn9SQw119m9KSADhPlBqEP4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "505075663814-muqqualbv16bvald8mrl8aa7a8dmsr9l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

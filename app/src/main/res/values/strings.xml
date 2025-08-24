@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Masuk Google</string>
+
+        <!-- default_web_client_id akan di-*inject* oleh google-services dari google-services.json -->
+        <string name="sign_in">Sign in with Google</string>
+        <string name="sign_out">Sign out</string>
+        <string name="status_signed_in">Signed in as %1$s</string>
+        <string name="status_signed_out">Signed out</string>
+        <string name="default_web_client_id">505075663814-muqqualbv16bvald8mrl8aa7a8dmsr9l.apps.googleusercontent.com</string>
+
+</resources>
