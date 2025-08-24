@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.gms.google.services)
+    id("com.huawei.agconnect")
 }
 
 android {
@@ -52,6 +53,13 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     // Firebase BoM menyatukan versi dependency Firebase
     implementation(platform("com.google.firebase:firebase-bom:34.1.0"))
+
+
+    // Huawei AppGallery Connect
+    implementation("com.huawei.agconnect:agconnect-core:1.9.1.301")
+    implementation("com.huawei.agconnect:agconnect-auth:1.9.1.301")
+    implementation("com.huawei.hms:hwid:6.12.0.300")
+
 
 
 // Google Sign-In

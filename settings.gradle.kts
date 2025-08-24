@@ -9,6 +9,8 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        // Huawei repository
+        maven { url = uri("https://developer.huawei.com/repo/") }
     }
 }
 dependencyResolutionManagement {
@@ -16,6 +18,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Huawei repository
+        maven { url = uri("https://developer.huawei.com/repo/") }
     }
 }
 

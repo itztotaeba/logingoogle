@@ -1,5 +1,6 @@
 package com.totaeba.masukgoogle
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.activity.ComponentActivity
@@ -13,35 +14,46 @@ import com.google.firebase.auth.GoogleAuthProvider
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.NoCredentialException
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.GoogleApiAvailability
 import kotlinx.coroutines.launch
+
+// Huawei imports
+import com.huawei.hms.support.account.AccountAuthManager
+import com.huawei.hms.support.account.request.AccountAuthParams
+import com.huawei.hms.support.account.request.AccountAuthParamsHelper
+import com.huawei.hms.support.account.result.AuthAccount
+import com.huawei.hms.support.account.service.AccountAuthService
+
+// Google Play Services check
+import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.common.ConnectionResult
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var auth: FirebaseAuth
 
+    private val HUAWEI_SIGN_IN = 8888
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Init FirebaseAuth
         auth = FirebaseAuth.getInstance()
 
-        // ==== Cek Google Play Services tersedia atau tidak ====
-        val gmsAvailable = isGooglePlayServicesAvailable()
-        if (!gmsAvailable) {
-            // Kalau device tidak ada Google Service (contoh: Huawei HMS only)
+        // --- Tampilkan tombol Google hanya jika GMS tersedia ---
+        if (isGmsAvailable()) {
+            binding.btnGoogleSignIn.visibility = View.VISIBLE
+        } else {
             binding.btnGoogleSignIn.visibility = View.GONE
         }
 
-        // Buat CredentialManager
-        val credentialManager = CredentialManager.create(this)
+        // Tombol Huawei selalu muncul
+        binding.btnHuaweiSignIn.visibility = View.VISIBLE
 
-        // Buat request untuk Google Sign-In
-        val request = GetCredentialRequest.Builder()
+        // --- Google Sign-In ---
+        val credentialManager = CredentialManager.create(this)
+        val googleRequest = GetCredentialRequest.Builder()
             .addCredentialOption(
                 GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
@@ -51,45 +63,44 @@ class MainActivity : ComponentActivity() {
             )
             .build()
 
-        // Tombol Sign In Google (kalau tersedia)
         binding.btnGoogleSignIn.setOnClickListener {
             lifecycleScope.launch {
                 try {
-                    val result = credentialManager.getCredential(this@MainActivity, request)
+                    val result = credentialManager.getCredential(this@MainActivity, googleRequest)
                     val credential = result.credential
-
-                    val googleIdTokenCredential =
-                        GoogleIdTokenCredential.createFrom(credential.data)
-
-                    val firebaseCredential = GoogleAuthProvider.getCredential(
-                        googleIdTokenCredential.idToken, null
-                    )
+                    val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data)
+                    val firebaseCredential = GoogleAuthProvider.getCredential(googleIdToken.idToken, null)
 
                     auth.signInWithCredential(firebaseCredential)
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 updateUI(auth.currentUser)
                             } else {
-                                binding.tvStatus.text = task.exception?.localizedMessage
-                                    ?: "Sign-in failed"
+                                binding.tvStatus.text = task.exception?.localizedMessage ?: "Sign-in failed"
                                 updateUI(null)
                             }
                         }
                 } catch (e: NoCredentialException) {
-                    e.printStackTrace()
-                    binding.tvStatus.text =
-                        "Tidak ada akun Google tersedia di device/emulator.\n" +
-                                "Login ke akun Google dulu di Settings."
+                    binding.tvStatus.text = "No Google account found on device."
                     updateUI(null)
                 } catch (e: Exception) {
-                    e.printStackTrace()
-                    binding.tvStatus.text = e.localizedMessage ?: "Login failed"
+                    binding.tvStatus.text = e.localizedMessage ?: "Google login failed"
                     updateUI(null)
                 }
             }
         }
 
-        // Tombol Sign Out
+        // --- Huawei Sign-In ---
+        binding.btnHuaweiSignIn.setOnClickListener {
+            val params: AccountAuthParams =
+                AccountAuthParamsHelper(AccountAuthParams.DEFAULT_AUTH_REQUEST_PARAM)
+                    .setIdToken()
+                    .createParams()
+            val service: AccountAuthService = AccountAuthManager.getService(this, params)
+            startActivityForResult(service.signInIntent, HUAWEI_SIGN_IN)
+        }
+
+        // --- Sign Out ---
         binding.btnSignOut.setOnClickListener {
             auth.signOut()
             updateUI(null)
@@ -99,11 +110,25 @@ class MainActivity : ComponentActivity() {
         updateUI(auth.currentUser)
     }
 
-    // 🔹 Fungsi cek GMS
-    private fun isGooglePlayServicesAvailable(): Boolean {
-        val availability = GoogleApiAvailability.getInstance()
-            .isGooglePlayServicesAvailable(this)
-        return availability == ConnectionResult.SUCCESS
+    private fun isGmsAvailable(): Boolean {
+        val resultCode = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this)
+        return resultCode == ConnectionResult.SUCCESS
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == HUAWEI_SIGN_IN) {
+            val task = AccountAuthManager.parseAuthResultFromIntent(data)
+            if (task.isSuccessful) {
+                val account: AuthAccount = task.result
+                binding.tvStatus.text = "Signed in with Huawei: ${account.displayName}"
+                binding.btnGoogleSignIn.visibility = View.GONE
+                binding.btnHuaweiSignIn.visibility = View.GONE
+                binding.btnSignOut.visibility = View.VISIBLE
+            } else {
+                binding.tvStatus.text = "Huawei login failed: ${task.exception.message}"
+            }
+        }
     }
 
     private fun updateUI(user: FirebaseUser?) {
@@ -112,16 +137,13 @@ class MainActivity : ComponentActivity() {
                 R.string.status_signed_in,
                 user.displayName ?: user.email ?: ""
             )
-            binding.btnGoogleSignIn.visibility = View.GONE
+            binding.btnGoogleSignIn.visibility = if (isGmsAvailable()) View.GONE else View.GONE
+            binding.btnHuaweiSignIn.visibility = View.GONE
             binding.btnSignOut.visibility = View.VISIBLE
         } else {
             binding.tvStatus.text = getString(R.string.status_signed_out)
-            // Hanya tampilkan tombol Google Sign-In jika ada GMS
-            if (isGooglePlayServicesAvailable()) {
-                binding.btnGoogleSignIn.visibility = View.VISIBLE
-            } else {
-                binding.btnGoogleSignIn.visibility = View.GONE
-            }
+            binding.btnGoogleSignIn.visibility = if (isGmsAvailable()) View.VISIBLE else View.GONE
+            binding.btnHuaweiSignIn.visibility = View.VISIBLE
             binding.btnSignOut.visibility = View.GONE
         }
     }
